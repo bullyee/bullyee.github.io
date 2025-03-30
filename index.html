@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetaSearch - Search Multiple Engines</title>
+  <meta name="description" content="A meta search engine that aggregates results from Google, Bing, DuckDuckGo, Yahoo, Baidu, and Naver.">
+  
+  <!-- Include Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f9fafb;
+      color: #111827;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .search-form {
+      margin-bottom: 2rem;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .search-button {
+      background-color: #4f46e5;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .search-button:hover {
+      background-color: #4338ca;
+    }
+    
+    .engines-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    
+    .engine-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.5rem 0.75rem;
+      background-color: #f3f4f6;
+      border-radius: 0.25rem;
+      cursor: pointer;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      font-size: 1.25rem;
+      color: #6b7280;
+    }
+    
+    .results-container {
+      display: grid;
+      gap: 1rem;
+    }
+    
+    .result-card {
+      padding: 1.5rem;
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e5e7eb;
+    }
+    
+    .result-title {
+      color: #1d4ed8;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    
+    .result-title:hover {
+      text-decoration: underline;
+    }
+    
+    .result-description {
+      color: #4b5563;
+      margin-bottom: 0.75rem;
+    }
+    
+    .result-url {
+      color: #059669;
+      font-size: 0.875rem;
+    }
+    
+    .result-source {
+      font-size: 0.75rem;
+      color: #6b7280;
+      background-color: #f3f4f6;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      display: inline-block;
+      margin-top: 0.5rem;
+    }
+    
+    .api-settings-button {
+      background-color: #f3f4f6;
+      color: #4b5563;
+      border: 1px solid #d1d5db;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    
+    .api-settings-button:hover {
+      background-color: #e5e7eb;
+    }
+    
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+    
+    .modal-content {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 0.5rem;
+      max-width: 500px;
+      width: 100%;
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    
+    .modal-input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      margin-bottom: 1rem;
+    }
+    
+    .modal-button {
+      background-color: #4f46e5;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    .modal-cancel {
+      background-color: #f3f4f6;
+      color: #4b5563;
+      padding: 0.75rem 1.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 0.5rem;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #4f46e5;
+    }
+    
+    .initial-state {
+      text-align: center;
+      padding: 5rem 1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .initial-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: linear-gradient(90deg, #4f46e5, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .initial-subtitle {
+      font-size: 1.25rem;
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+    
+    .sort-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1rem;
+    }
+    
+    .sort-label {
+      font-size: 0.875rem;
+      color: #4b5563;
+      margin-right: 0.5rem;
+    }
+    
+    .sort-select {
+      padding: 0.375rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+    }
+    
+    .error-message {
+      background-color: #fee2e2;
+      color: #b91c1c;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .engines-label {
+      font-size: 0.875rem;
+      color: #4b5563;
+      margin-bottom: 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      .search-form {
+        flex-direction: column;
+      }
+      
+      .search-button {
+        width: 100%;
+        margin-top: 0.5rem;
+      }
+      
+      .engines-container {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <!-- Header with logo and API settings button -->
+      <div class="header">
+        <div class="logo">MetaSearch</div>
+        <button class="api-settings-button" @click="showApiModal = true">API Settings</button>
+      </div>
+      
+      <!-- Initial state display -->
+      <div v-if="showInitialState" class="initial-state">
+        <h1 class="initial-title">Search Across Multiple Engines</h1>
+        <p class="initial-subtitle">Get comprehensive results from Google, Bing, DuckDuckGo, Yahoo, Baidu, and Naver all in one place.</p>
+      </div>
+      
+      <!-- API key modal -->
+      <div v-if="showApiModal" class="modal">
+        <div class="modal-content">
+          <h2 class="modal-title">API Settings</h2>
+          <p style="margin-bottom: 1rem; color: #4b5563;">Enter your SerpApi key to enable search functionality. Get one at <a href="https://serpapi.com" target="_blank" style="color: #4f46e5;">serpapi.com</a></p>
+          
+          <label for="serpApiKey" style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: #4b5563;">SerpApi Key</label>
+          <input 
+            type="text" 
+            id="serpApiKey" 
+            v-model="serpApiKey" 
+            class="modal-input" 
+            placeholder="Your SerpApi key"
+          >
+          
+          <div class="modal-buttons">
+            <button class="modal-cancel" @click="showApiModal = false">Cancel</button>
+            <button class="modal-button" @click="saveApiSettings">Save Settings</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Search form -->
+      <div class="search-form">
+        <div style="position: relative; margin-bottom: 1rem;">
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            class="search-input" 
+            placeholder="Enter your search query..."
+            @keyup.enter="performSearch"
+          >
+        </div>
+        
+        <div>
+          <div class="engines-label">Search engines to use:</div>
+          <div class="engines-container">
+            <label class="engine-checkbox" v-for="engine in availableEngines" :key="engine.id">
+              <input type="checkbox" v-model="selectedEngines" :value="engine.id">
+              <span>{{ engine.name }}</span>
+            </label>
+          </div>
+        </div>
+        
+        <div style="margin-top: 1rem;">
+          <button 
+            class="search-button" 
+            @click="performSearch" 
+            :disabled="isLoading || !hasApiKey || searchQuery.trim() === ''"
+            :style="{ opacity: (isLoading || !hasApiKey || searchQuery.trim() === '') ? '0.7' : '1' }"
+          >
+            {{ isLoading ? 'Searching...' : 'Search' }}
+          </button>
+          
+          <p v-if="!hasApiKey" style="margin-top: 0.5rem; color: #b91c1c; font-size: 0.875rem;">
+            Please configure your SerpApi key in API Settings first.
+          </p>
+        </div>
+      </div>
+      
+      <!-- Error message -->
+      <div v-if="error" class="error-message">
+        {{ error }}
+      </div>
+      
+      <!-- Search results -->
+      <div v-if="results.length > 0">
+        <div class="sort-container">
+          <span class="sort-label">Sort by:</span>
+          <select v-model="sortBy" class="sort-select">
+            <option value="relevance">Relevance</option>
+            <option value="source">Source</option>
+            <option value="date">Date</option>
+          </select>
+        </div>
+        
+        <div class="results-container">
+          <div v-for="(result, index) in sortedResults" :key="index" class="result-card">
+            <a :href="result.link" target="_blank" class="result-title">{{ result.title }}</a>
+            <p class="result-description">{{ result.snippet }}</p>
+            <div class="result-url">{{ result.displayLink || formatURL(result.link) }}</div>
+            <div class="result-source">{{ result.source }}</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Loading state -->
+      <div v-if="isLoading" class="loading">
+        Searching across multiple engines...
+      </div>
+      
+      <!-- No results state -->
+      <div v-if="!isLoading && results.length === 0 && searchPerformed" style="text-align: center; padding: 2rem; color: #6b7280;">
+        No results found. Try a different search query or select more search engines.
+      </div>
+    </div>
+  </div>
+  
+  <!-- Import Vue.js from CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  
+  <script>
+    // Create Vue application
+    const { createApp, ref, computed, onMounted } = Vue;
+    
+    createApp({
+      setup() {
+        const searchQuery = ref('');
+        const results = ref([]);
+        const isLoading = ref(false);
+        const error = ref('');
+        const sortBy = ref('relevance');
+        const showApiModal = ref(false);
+        const serpApiKey = ref('');
+        const searchPerformed = ref(false);
+        const showInitialState = ref(true);
+        
+        const availableEngines = [
+          { id: 'google', name: 'Google' },
+          { id: 'bing', name: 'Bing' },
+          { id: 'duckduckgo', name: 'DuckDuckGo' },
+          { id: 'yahoo', name: 'Yahoo' },
+          { id: 'baidu', name: 'Baidu' },
+          { id: 'naver', name: 'Naver' }
+        ];
+        
+        const selectedEngines = ref(['google', 'bing', 'duckduckgo']);
+        
+        // Check if API key is stored in localStorage
+        onMounted(() => {
+          const storedApiKey = localStorage.getItem('serpApiKey');
+          if (storedApiKey) {
+            serpApiKey.value = storedApiKey;
+          }
+        });
+        
+        // Computed property to check if API key is available
+        const hasApiKey = computed(() => {
+          return serpApiKey.value && serpApiKey.value.trim() !== '';
+        });
+        
+        // Function to save API settings
+        const saveApiSettings = () => {
+          localStorage.setItem('serpApiKey', serpApiKey.value);
+          showApiModal.value = false;
+        };
+        
+        // Function to format URL for display
+        const formatURL = (url) => {
+          if (!url) return '';
+          try {
+            const urlObj = new URL(url);
+            return urlObj.hostname + urlObj.pathname.substring(0, 15) + (urlObj.pathname.length > 15 ? '...' : '');
+          } catch (e) {
+            return url.substring(0, 30) + (url.length > 30 ? '...' : '');
+          }
+        };
+        
+        // Function to perform the search across multiple engines
+        const performSearch = async () => {
+          if (!searchQuery.value.trim() || !hasApiKey.value) return;
+          
+          isLoading.value = true;
+          error.value = '';
+          results.value = [];
+          searchPerformed.value = true;
+          showInitialState.value = false;
+          
+          try {
+            const apiKey = serpApiKey.value;
+            let allResults = [];
+            
+            // Create a queue of promises for each engine
+            const searchPromises = selectedEngines.value.map(engine => {
+              return searchWithEngine(searchQuery.value, engine, apiKey);
+            });
+            
+            // Execute all search promises in parallel
+            const resultsPerEngine = await Promise.all(searchPromises);
+            
+            // Combine and deduplicate results
+            for (let engineResults of resultsPerEngine) {
+              allResults = [...allResults, ...engineResults];
+            }
+            
+            // Remove duplicates based on link
+            results.value = deduplicateResults(allResults);
+            
+          } catch (err) {
+            console.error('Search error:', err);
+            error.value = `Error performing search: ${err.message || 'Unknown error'}`;
+          } finally {
+            isLoading.value = false;
+          }
+        };
+        
+        // Function to search using a specific engine
+        const searchWithEngine = async (query, engine, apiKey) => {
+          try {
+            // SerpApi parameters for different engines
+            const params = {
+              engine,
+              q: query,
+              api_key: apiKey
+            };
+            
+            // Add specific parameters for certain engines
+            if (engine === 'baidu') {
+              params.hl = 'zh-cn';
+            } else if (engine === 'naver') {
+              params.hl = 'ko';
+            }
+            
+            const response = await axios.get(`https://serpapi.com/search`, { params });
+            
+            if (!response.data) {
+              throw new Error(`No data returned from ${engine}`);
+            }
+            
+            // Parse results based on engine
+            let engineResults = [];
+            
+            if (engine === 'google' && response.data.organic_results) {
+              engineResults = response.data.organic_results.map(result => ({
+                title: result.title,
+                link: result.link,
+                snippet: result.snippet || '',
+                displayLink: result.displayed_link || formatURL(result.link),
+                source: 'Google'
+              }));
+            } else if (engine === 'bing' && response.data.organic_results) {
+              engineResults = response.data.organic_results.map(result => ({
+                title: result.title,
+                link: result.link,
+                snippet: result.snippet || '',
+                displayLink: result.displayed_link || formatURL(result.link),
+                source: 'Bing'
+              }));
+            } else if (engine === 'duckduckgo' && response.data.organic_results) {
+              engineResults = response.data.organic_results.map(result => ({
+                title: result.title,
+                link: result.link,
+                snippet: result.snippet || '',
+                displayLink: result.displayed_link || formatURL(result.link),
+                source: 'DuckDuckGo'
+              }));
+            } else if (engine === 'yahoo' && response.data.organic_results) {
+              engineResults = response.data.organic_results.map(result => ({
+                title: result.title,
+                link: result.link,
+                snippet: result.snippet || '',
+                displayLink: result.displayed_link || formatURL(result.link),
+                source: 'Yahoo'
+              }));
+            } else if (engine === 'baidu' && response.data.organic_results) {
+              engineResults = response.data.organic_results.map(result => ({
+                title: result.title,
+                link: result.link,
+                snippet: result.snippet || '',
+                displayLink: formatURL(result.link),
+                source: 'Baidu'
+              }));
+            } else if (engine === 'naver' && response.data.organic_results) {
+              engineResults = response.data.organic_results.map(result => ({
+                title: result.title,
+                link: result.link,
+                snippet: result.snippet || '',
+                displayLink: formatURL(result.link),
+                source: 'Naver'
+              }));
+            }
+            
+            return engineResults;
+          } catch (err) {
+            console.error(`Error searching with ${engine}:`, err);
+            // Return empty results for this engine but don't break the entire search
+            return [];
+          }
+        };
+        
+        // Function to remove duplicate results
+        const deduplicateResults = (results) => {
+          const seen = new Set();
+          return results.filter(result => {
+            // Normalize URL to avoid minor differences causing duplicates
+            const normalizedUrl = result.link.replace(/https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+            if (seen.has(normalizedUrl)) {
+              return false;
+            }
+            seen.add(normalizedUrl);
+            return true;
+          });
+        };
+        
+        // Computed property for sorted results
+        const sortedResults = computed(() => {
+          if (sortBy.value === 'relevance') {
+            return [...results.value]; // Already in relevance order
+          } else if (sortBy.value === 'source') {
+            return [...results.value].sort((a, b) => a.source.localeCompare(b.source));
+          } else if (sortBy.value === 'date') {
+            // For simplicity, we're just using the original order as a proxy for date
+            // In a real app, you would parse dates from results if available
+            return [...results.value].reverse();
+          }
+          return results.value;
+        });
+        
+        return {
+          searchQuery,
+          results,
+          isLoading,
+          error,
+          sortBy,
+          availableEngines,
+          selectedEngines,
+          showApiModal,
+          serpApiKey,
+          hasApiKey,
+          searchPerformed,
+          showInitialState,
+          sortedResults,
+          
+          performSearch,
+          saveApiSettings,
+          formatURL
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
